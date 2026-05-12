@@ -37,13 +37,6 @@ public class Reservation {
         this.dateTime = dateTime;
     }
 
-    public static Reservation createNewReservation(int id, String name, LocalDateTime dateTime) {
-        checkValidId(id);
-        checkValidName(name);
-        checkValidDateTime(dateTime);
-        return new Reservation(id, name, dateTime);
-    }
-
     private static void checkValidId(int id) {
         if (id <= 0) {
             throw new IllegalArgumentException("id는 자연수여야 합니다.");
