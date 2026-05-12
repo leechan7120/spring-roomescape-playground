@@ -52,22 +52,28 @@ public class RoomescapeController {
 
     @PostMapping("/reservations")
     @ResponseBody
-    public ResponseEntity<Void> createReservation(@RequestBody Reservation request) {
+    public ResponseEntity<Reservation> createReservation(@RequestBody Reservation request) {
         String selectQuery = "SELECT datetime from Reservations";
         List<LocalDateTime> ReservationsTime = jdbcTemplate.query(
                 selectQuery, (resultSet, rowNum) -> resultSet.getObject("datetime", LocalDateTime.class)
         );
-
         checkDuplicateException(request.getDateTime(), ReservationsTime);
+
         String sqlQuery = "INSERT INTO Reservations(name, datetime) VALUES (?, ?)";
         jdbcTemplate.update(sqlQuery, request.getName(), request.getDateTime());
 
-        sqlQuery = "SELECT MAX(id) FROM Reservations";
-        int reservationId = jdbcTemplate.queryForObject(sqlQuery, Integer.class);
+        sqlQuery = "SELECT * FROM Reservations ORDER BY id DESC LIMIT 1";
+        Reservation reservation = jdbcTemplate.queryForObject(sqlQuery, (rs, rowNum) ->
+                new Reservation(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getTimestamp("datetime").toLocalDateTime()
+                )
+        );
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", "/reservations/" + reservationId);
-        return ResponseEntity.status(HttpStatus.CREATED).headers(headers).build();
+        headers.add("Location", "/reservations/" + reservation.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).headers(headers).body(reservation);
     }
 
     @DeleteMapping("/reservations/{id}")
